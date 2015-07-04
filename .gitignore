@@ -1,0 +1,6 @@
+master
+sandbox
+*~
+slave
+/passwords.py
+*.pyc
