@@ -4,3 +4,4 @@ sandbox
 slave
 /passwords.py
 *.pyc
+/conf.cfg
