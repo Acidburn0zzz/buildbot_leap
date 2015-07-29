@@ -6,5 +6,6 @@ Dependencies
 - libzmq-dev
 - python2.7
 - virtualenv for python2.7
+- python-dev for python2
 - make
 - gcc

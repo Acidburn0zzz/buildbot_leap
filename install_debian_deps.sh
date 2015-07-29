@@ -5,7 +5,8 @@ JESSIE_PACKAGES=(git
 		 libzmq-dev
 		 python-virtualenv
 		 python2.7
-		 make,
+		 python-dev # python2 dev files
+		 make
 		 gcc
 		)
 
