@@ -8,6 +8,6 @@ Dependencies
 - virtualenv for python2.7
 - python-dev for python2
 - make
-- gcc
+- g++
 - libssl-dev
 - protobuf-compiler

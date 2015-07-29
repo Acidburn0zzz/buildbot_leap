@@ -7,7 +7,7 @@ JESSIE_PACKAGES=(git
 		 python2.7
 		 python-dev # python2 dev files
 		 make
-		 gcc
+		 g++
 		 libssl-dev
 		 protobuf-compiler
 		)
