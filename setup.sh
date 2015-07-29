@@ -5,9 +5,18 @@
 ## buildbot
 
 base_dir=`pwd`
-virtualenv --python=python2 sandbox
+virtualenv_directory=$base_dir/sandbox
+virtualenv --python=python2 $virtualenv_directory
 
-source sandbox/bin/activate
+virtualenv_bin=$virtualenv_directory/bin
+PATH=$virtualenv_directory/bin:$PATH
+
+buildbot_sources=buildbot-sources
+git clone --depth 1 git://github.com/buildbot/buildbot.git $buildbot_sources
+cd $buildbot_sources
+pip install -e master
+pip install -e slave
+make prebuilt_frontend
 
 buildbot create-master master
 ln -s $base_dir/master.cfg master/
