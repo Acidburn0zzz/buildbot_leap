@@ -9,3 +9,5 @@ Dependencies
 - python-dev for python2
 - make
 - gcc
+- libssl-dev
+- protobuf-compiler

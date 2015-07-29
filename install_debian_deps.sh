@@ -8,6 +8,8 @@ JESSIE_PACKAGES=(git
 		 python-dev # python2 dev files
 		 make
 		 gcc
+		 libssl-dev
+		 protobuf-compiler
 		)
 
 if [[ $EUID -ne 0 ]]; then
