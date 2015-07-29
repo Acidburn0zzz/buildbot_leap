@@ -4,5 +4,5 @@ Dependencies
 - libffi-dev
 - libsqlite3-dev
 - libzmq-dev
-- virtualenv for python2
-- python2
+- python2.7
+- virtualenv for python2.7

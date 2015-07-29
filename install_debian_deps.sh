@@ -1,1 +1,1 @@
-apt-get install git libffi-dev libsqlite3-dev libzmq-dev python-virtualenv python2
+apt-get install git libffi-dev libsqlite3-dev libzmq-dev python-virtualenv python2.7
