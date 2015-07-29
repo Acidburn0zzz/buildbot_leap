@@ -5,7 +5,9 @@ JESSIE_PACKAGES=(git
 		 libzmq-dev
 		 python-virtualenv
 		 python2.7
-		 make)
+		 make,
+		 gcc
+		)
 
 if [[ $EUID -ne 0 ]]; then
     echo "You need to be root to install packages"

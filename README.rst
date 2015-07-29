@@ -7,3 +7,4 @@ Dependencies
 - python2.7
 - virtualenv for python2.7
 - make
+- gcc
