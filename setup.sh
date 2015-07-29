@@ -17,6 +17,7 @@ cd $buildbot_sources
 pip install -e master
 pip install -e slave
 make prebuilt_frontend
+cd -
 
 buildbot create-master master
 ln -s $base_dir/master.cfg master/
