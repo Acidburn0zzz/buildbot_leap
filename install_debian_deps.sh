@@ -10,6 +10,10 @@ JESSIE_PACKAGES=(git
 		 g++
 		 libssl-dev
 		 protobuf-compiler
+		 python-pyside
+		 pyside-tools
+		 openvpn
+		 python-openssl
 		)
 
 if [[ $EUID -ne 0 ]]; then

@@ -1,13 +1,3 @@
 Dependencies
 ------------
-- git
-- libffi-dev
-- libsqlite3-dev
-- libzmq-dev
-- python2.7
-- virtualenv for python2.7
-- python-dev for python2
-- make
-- g++
-- libssl-dev
-- protobuf-compiler
+See `Bitmask Client documentation <https://leap.se/en/docs/client/dev-environment#install-dependencies>`_
