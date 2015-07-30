@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Requirements:
-## virtualenv
-## buildbot
+# Install requirements (see README)
 
 base_dir=`pwd`
 virtualenv_directory=$base_dir/sandbox
