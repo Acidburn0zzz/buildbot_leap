@@ -22,3 +22,17 @@ Setting up a slave
 - For more information, and since we're using the latest version of
   Buildbot, please read `creating a slave
   <http://docs.buildbot.net/latest/manual/installation.html#creating-a-buildslave>`_
+
+Workflow
+--------
+
+- Set up a feature branch and push modifications to it.
+- Fetch your feature branch in lizard:/home/buildbot/buildbot-bitmask.
+- Restart the buildbot in the virtualenv::
+
+    root@lizard:/home/buildbot/buildbot-bitmask# source sandbox/bin/activate
+    (sandbox)root@lizard:/home/buildbot/buildbot-bitmask# buildbot restart master
+
+- Once the code is tested in the feature branch it should be rebased/squashed and
+  merged into the master branch.
+- With the code merged into the master branch restart the buildbot using this branch.
