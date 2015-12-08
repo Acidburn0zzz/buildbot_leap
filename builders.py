@@ -42,7 +42,7 @@ class Builders(object):
         if namespace is not '':
             if repo_name is 'bitmask_client':
                 factory.addStep(
-                    ShellCommand(command=['xvfb-run', 'coverage', 'run', '--omit=*/'+venv_name+'/*', venv_name + '/bin/trial', namespace], env=venv_path, workdir='.', name="trial "+namespace))
+                    ShellCommand(command=['xvfb-run', 'coverage', 'run', '--omit=*/'+venv_name+'/*', venv_name + '/bin/nosetests', namespace], env=venv_path, workdir='.', name="nosetests "+namespace))
             else:
                 factory.addStep(
                     ShellCommand(command=['coverage', 'run', '--omit=*/'+venv_name+'/*', venv_name + '/bin/trial', namespace], env=venv_path, workdir='.', name="trial "+namespace))
