@@ -23,6 +23,13 @@ Setting up a slave
   Buildbot, please read `creating a slave
   <http://docs.buildbot.net/latest/manual/installation.html#creating-a-buildslave>`_
 
+Local slaves
+-------------
+slaves are run as a different user.
+to start them::
+  source env/bin/activate
+  buildslave start worker
+
 Workflow
 --------
 
@@ -32,7 +39,7 @@ Workflow
 
     buildbot@lizard:~/buildbot-bitmask$ source sandbox/bin/activate
     (sandbox)buildbot@lizard:~/buildbot-bitmask$ buildbot restart master
-    (sandbox)buildbot@lizard:~/buildbot-bitmask$ buildslave restart slave
+    (sandbox)buildslave@lizard:~$ buildslave restart worker
 
 - Once the code is tested in the feature branch it should be rebased/squashed and
   merged into the master branch.
