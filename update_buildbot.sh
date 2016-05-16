@@ -21,7 +21,7 @@ fi
 cd $buildbot_sources
 pip install -e master
 pip install -e slave
-make prebuild_frontend
+make prebuilt_frontend
 cd -
 
 buildbot stop master

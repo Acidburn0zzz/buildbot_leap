@@ -28,10 +28,11 @@ Workflow
 
 - Set up a feature branch and push modifications to it.
 - Fetch your feature branch in lizard:/home/buildbot/buildbot-bitmask.
-- Restart the buildbot in the virtualenv::
+- Restart the buildbot master and slaves in the virtualenv::
 
-    root@lizard:/home/buildbot/buildbot-bitmask# source sandbox/bin/activate
-    (sandbox)root@lizard:/home/buildbot/buildbot-bitmask# buildbot restart master
+    buildbot@lizard:~/buildbot-bitmask$ source sandbox/bin/activate
+    (sandbox)buildbot@lizard:~/buildbot-bitmask$ buildbot restart master
+    (sandbox)buildbot@lizard:~/buildbot-bitmask$ buildslave restart slave
 
 - Once the code is tested in the feature branch it should be rebased/squashed and
   merged into the master branch.
