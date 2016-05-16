@@ -1,7 +1,7 @@
-from buildbot.buildslave import BuildSlave
+from buildbot.plugins import worker
 
 
-class MySlave(BuildSlave):
+class MyWorker(worker.Worker):
     # We store the passwords for the buildslaves in a separate file, so we
     # can share this one more widely.
     # Thanks https://svn.torproject.org/svn/projects/buildbot/trunk/master.cfg
@@ -18,17 +18,17 @@ class MySlave(BuildSlave):
     def __init__(self, name, is_leap):
         self.name = name
         self.is_leap = is_leap
-        BuildSlave.__init__(self, name, self.PASSWORDS[name])
+        worker.Worker.__init__(self, name, self.PASSWORDS[name])
 
 
-slaves = [
-    MySlave("localhost_slave", is_leap=True),
-    MySlave("macmini_kali", is_leap=False)
+workers = [
+    MyWorker("localhost_slave2", is_leap=True),
+    MyWorker("macmini_kali", is_leap=False)
 ]
 
 
 def leap_names():
-    return [slave.name for slave in slaves if slave.is_leap]
+    return [slave.name for slave in workers if slave.is_leap]
 
 
 def is_leap(slave_name):
@@ -36,4 +36,4 @@ def is_leap(slave_name):
 
 
 def names():
-    return [slave.name for slave in slaves]
+    return [slave.name for slave in workers]

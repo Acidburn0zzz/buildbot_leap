@@ -1,8 +1,7 @@
 from util import github_repo_url, order_repos_index
 
 from buildbot.process.factory import BuildFactory
-from buildbot.steps.source.git import Git
-from buildbot.steps.shell import ShellCommand
+from buildbot.plugins import steps
 from buildbot.config import BuilderConfig
 
 
@@ -21,12 +20,12 @@ class Builders(object):
 
         factory = BuildFactory()
         factory.addSteps([
-            ShellCommand(command=["rm", "-rf", venv_name], haltOnFailure=True,
+            steps.ShellCommand(command=["rm", "-rf", venv_name], haltOnFailure=True,
                          workdir=".", name="Remove previous virtualenv"),
-            ShellCommand(command=["virtualenv", "--python=python2", venv_name],
+            steps.ShellCommand(command=["virtualenv", "--python=python2", venv_name],
                          haltOnFailure=True, workdir=".",
                          name="Create new virtualenv"),
-            ShellCommand(
+            steps.ShellCommand(
                 command=['pip', 'install', '-U', 'pip', 'setuptools',
                          'coverage'],
                 env=venv_path, workdir=".", name="Update setuptools")
@@ -37,32 +36,39 @@ class Builders(object):
             _add_repo_to_factory(factory, repo_name, repo_branch, namespace, venv_name)
 
         factory.addSteps([
-            ShellCommand(command=['pep8', '.'],env=venv_path_factory,haltOnFailure=False, workdir=repo_name, name="pep8 on " + repo_name)])
+            steps.ShellCommand(command=['pep8', '.'],env=venv_path_factory,haltOnFailure=False, workdir=repo_name, name="pep8 on " + repo_name)])
 
         if namespace is not '':
             if repo_name is 'bitmask_client':
                 factory.addStep(
-                    ShellCommand(command=['xvfb-run', 'coverage', 'run', '--omit=*/'+venv_name+'/*', venv_name + '/bin/trial', namespace], env=venv_path, workdir='.', name="trial "+namespace))
+                    steps.ShellCommand(command=['xvfb-run', 'coverage', 'run', '--omit=*/'+venv_name+'/*', venv_name + '/bin/trial', namespace], env=venv_path, workdir='.', name="trial "+namespace))
             else:
                 factory.addStep(
-                    ShellCommand(command=['coverage', 'run', '--omit=*/'+venv_name+'/*', venv_name + '/bin/trial', namespace], env=venv_path, workdir='.', name="trial "+namespace))
+                    steps.ShellCommand(command=['coverage', 'run', '--omit=*/'+venv_name+'/*', venv_name + '/bin/trial', namespace], env=venv_path, workdir='.', name="trial "+namespace))
 
             factory.addSteps([
-                ShellCommand(command=['coverage', 'html'], env=venv_path, workdir='.', name="generate html coverage report for " +namespace),
-                ShellCommand(command=self._publish_coverage_reports_command('htmlcov', repo_name), workdir='.', doStepIf=(lambda step: self.slaves.is_leap(step.getProperty('slavename'))))
+                steps.ShellCommand(
+			command=['coverage', 'html'], env=venv_path, workdir='.',
+			name="generate html coverage report for " +namespace),
+                steps.ShellCommand(
+			command=self._publish_coverage_reports_command(
+				'htmlcov', repo_name), workdir='.',
+				doStepIf=(
+					lambda step: self.slaves.is_leap(step.getProperty('slavename'))))
             ])
 
-        self._publish_leap_wheels(factory, repo_name, venv_path_factory, doStepIf=(lambda step: self.slaves.is_leap(step.getProperty('slavename'))))
+        self._publish_leap_wheels(
+	    factory, repo_name, venv_path_factory, doStepIf=(lambda step: self.slaves.is_leap(step.getProperty('slavename'))))
 
         if repo_name == 'bitmask_client':
             publish_sumo = self._publish_sumo_command('`ls -t *SUMO.tar.gz | head -1`')
 
             factory.addSteps([
-                ShellCommand(command=['make', 'sumo_tarball_latest'],
+                steps.ShellCommand(command=['make', 'sumo_tarball_latest'],
                               env=venv_path_factory, workdir=repo_name,
                               doStepIf=(lambda step: self.slaves.is_leap(step.getProperty('slavename'))),
                               name="make sumo tarball"),
-                 ShellCommand(command=publish_sumo,
+                steps.ShellCommand(command=publish_sumo,
                               env=venv_path_factory, workdir=repo_name + "/dist",
                               doStepIf=(lambda step: self.slaves.is_leap(step.getProperty('slavename'))),
                               name="publish sumo to ftp")
@@ -73,7 +79,6 @@ class Builders(object):
 
     def _publish_coverage_reports_command(self, location, repo_name):
         target_directory = self.config.get('ftp', 'coverage_reports_target_directory') + '/' + repo_name + '_' + '`git -C ' + repo_name + ' describe`'
-
         return self._ftp_publish_dir_command(location, target_directory)
 
     def _publish_leap_wheels(self, factory, repo_name, env, doStepIf):
@@ -82,12 +87,31 @@ class Builders(object):
         if repo_name == 'soledad':
             for subpackage in ["common", "client", "server"]:
                 factory.addSteps([
-                    ShellCommand(command=['python', 'setup.py', 'bdist_wheel'], env=env_soledad, doStepIf=doStepIf, haltOnFailure=True, workdir=repo_name+'/'+subpackage, name="leap wheels for " + repo_name+"."+subpackage),
-                    ShellCommand(command=self._publish_leap_wheels_soledad(subpackage, '`ls -t *.whl | head -1`'), env=env_soledad, doStepIf=doStepIf, haltOnFailure=True, workdir=repo_name+'/'+subpackage+'/dist', name="publish leap wheels for " + repo_name+"."+subpackage)])
+                    steps.ShellCommand(
+			command=['python', 'setup.py', 'bdist_wheel'],
+			env=env_soledad, doStepIf=doStepIf, haltOnFailure=True, 
+			workdir=repo_name+'/'+subpackage,
+			name="leap wheels for " + repo_name+"."+subpackage),
+                    steps.ShellCommand(
+			command=self._publish_leap_wheels_soledad(
+			    subpackage, '`ls -t *.whl | head -1`'),
+			env=env_soledad, doStepIf=doStepIf, haltOnFailure=True,
+			workdir=repo_name+'/'+subpackage+'/dist',
+			name="publish leap wheels for " + repo_name+"."+subpackage)])
         else:
             factory.addSteps([
-                ShellCommand(command=['python', 'setup.py', 'bdist_wheel'], env=env, doStepIf=doStepIf, workdir=repo_name, name="Generate leap wheels for "+repo_name),
-                ShellCommand(command=self._publish_leap_wheels_command(repo_name, '`ls -t *.whl | head -1`'), env=env, doStepIf=doStepIf, workdir=repo_name + '/dist', name="Publish leap wheels for "+repo_name)
+                steps.ShellCommand(
+			command=['python', 'setup.py', 'bdist_wheel'],
+			env=env, doStepIf=doStepIf,
+			#workdir='build/',
+			workdir=repo_name,
+			name="Generate leap wheels for "+repo_name),
+                steps.ShellCommand(
+			command=self._publish_leap_wheels_command(
+			    repo_name, '`ls -t *.whl | head -1`'),
+			env=env, doStepIf=doStepIf,
+			workdir=repo_name + '/dist/',
+			name="Publish leap wheels for "+repo_name)
             ])
 
     def _publish_leap_wheels_command(self, repo_name, location):
@@ -104,7 +128,10 @@ class Builders(object):
 
     def _publish_sumo_command(self, location):
         directory = self.config.get('ftp', 'sumo_target_directory')
-        command = self._ftp_publish_command(location, directory) + ' && ' + self._ftp_soft_link(location, directory, 'leap.bitmask-latest-SUMO.tar.gz')
+        ftp = self._ftp_publish_command(location, directory)
+        link = self._ftp_soft_link(
+            location, directory, 'leap.bitmask-latest-SUMO.tar.gz')
+        command = ftp + ' && ' + link
 
         return command
 
@@ -140,7 +167,7 @@ class Builders(object):
                              "-i", ssh_key,
                              '-p', ssh_port,
                              user + '@' + server,
-                             '"mkdir ' + to_location + '"']
+                             '"mkdir -p ' + to_location + '"']
 
         scp_command = ['scp',
                        '-i', ssh_key,
@@ -168,21 +195,21 @@ class Builders(object):
         sandbox_path = {'PATH':  "../" + venv_name + '/bin' + ':${PATH}'}
         sandbox_path_soledad = {'PATH':  "../../" + venv_name + '/bin/' + ':${PATH}'}
 
-        factory.addStep(ShellCommand(command=["virtualenv", "--python=python2", venv_name], haltOnFailure=True, workdir=".", name="Create new virtualenv"))
-        factory.addStep(ShellCommand(command=['pip', 'install', '-U', 'wheel'], env=sandbox_path_top, haltOnFailure=True, workdir=".", name="Install wheels"))
+        factory.addStep(steps.ShellCommand(command=["virtualenv", "--python=python2", venv_name], haltOnFailure=True, workdir=".", name="Create new virtualenv"))
+        factory.addStep(steps.ShellCommand(command=['pip', 'install', '-U', 'wheel'], env=sandbox_path_top, haltOnFailure=True, workdir=".", name="Install wheels"))
         for repo_name, git_branch, _, _ in self.repos:
             repo_url = github_repo_url(repo_name)
             workdir = repo_name
             factory.addStep(
-                Git(repourl=repo_url, branch=git_branch, workdir=workdir, mode='full', method='clobber', shallow=True, haltOnFailure=True, name="Pull " + repo_url))
+                steps.Git(repourl=repo_url, branch=git_branch, workdir=workdir, mode='full', method='clobber', shallow=True, haltOnFailure=True, name="Pull " + repo_url))
             if 'soledad' in repo_name:
                 for subpackage in ["common", "client", "server"]:
                     factory.addStep(
-                        ShellCommand(command=generate_wheels, env=sandbox_path_soledad, haltOnFailure=True, workdir=workdir+'/'+subpackage, name="wheels for " + repo_name+"."+subpackage))
+                        steps.ShellCommand(command=generate_wheels, env=sandbox_path_soledad, haltOnFailure=True, workdir=workdir+'/'+subpackage, name="wheels for " + repo_name+"."+subpackage))
             else:
                 factory.addStep(
-                    ShellCommand(command=generate_wheels, env=sandbox_path, haltOnFailure=True, workdir=workdir, name="wheels for " + repo_name))
-        factory.addStep(ShellCommand(command=publish_wheels, env=sandbox_path, doStepIf=(lambda step: self.slaves.is_leap(step.getProperty('slavename'))), workdir=".", name="publish wheels"))
+                    steps.ShellCommand(command=generate_wheels, env=sandbox_path, haltOnFailure=True, workdir=workdir, name="wheels for " + repo_name))
+        factory.addStep(steps.ShellCommand(command=publish_wheels, env=sandbox_path, doStepIf=(lambda step: self.slaves.is_leap(step.getProperty('slavename'))), workdir=".", name="publish wheels"))
 
         self._add_pyside_setup_repo(factory)
 
@@ -204,10 +231,10 @@ class Builders(object):
 
         publish_pyside_wheel = self._publish_pyside_command('`ls -t *.whl | head -1`')
         factory.addSteps([
-            ShellCommand(command=['rm', '-rf', repo_name], workdir='.', env=sandbox_path, name="Remove previous pyside"),
-            Git(repourl=repo_url, branch=git_branch, workdir=repo_name, mode='full', method='clobber', shallow=True, haltOnFailure=True, name="Pull " + repo_url),
-            ShellCommand(command=['python', 'setup.py', 'bdist_wheel', '--standalone'], workdir=repo_name, env=sandbox_path, name="Wheel for " + repo_name),
-            ShellCommand(command=publish_pyside_wheel, workdir=repo_name + '/dist/', name="Publish pyside")
+            steps.ShellCommand(command=['rm', '-rf', repo_name], workdir='.', env=sandbox_path, name="Remove previous pyside"),
+            steps.Git(repourl=repo_url, branch=git_branch, workdir=repo_name, mode='full', method='clobber', shallow=True, haltOnFailure=True, name="Pull " + repo_url),
+            steps.ShellCommand(command=['python', 'setup.py', 'bdist_wheel', '--standalone'], workdir=repo_name, env=sandbox_path, name="Wheel for " + repo_name),
+            steps.ShellCommand(command=publish_pyside_wheel, workdir=repo_name + '/dist/', name="Publish pyside")
         ])
 
     def _publish_pyside_command(self, location):
@@ -231,14 +258,14 @@ class Builders(object):
         publish_bundle = self._publish_bundle_command('`ls -t *.tar.gz | head -1`')
 
         factory.addSteps([
-            Git(repourl=repo_url, branch=branch, workdir=repo_dir, mode='full', method='clobber', shallow=True, haltOnFailure=True, name="Pull " + repo_url),
-            ShellCommand(command="rm -rf " + bundler_output_dir, workdir=workdir, name="Remove previous bundler dir"),
-            ShellCommand(command="mkdir " + bundler_output_dir, workdir=workdir, name="Create bundler dir"),
-            ShellCommand(command="cp bundle_pyinstaller.sh ../" + bundler_output_dir, workdir=repo_dir, haltOnFailure=True, name="Copy bundle_pyinstaller"),
-            ShellCommand(command="mkdir files", workdir=workdir + '/' + bundler_output_dir, name="Create auxiliary folder"),
-            ShellCommand(command="wget http://lizard.leap.se/sumo-tarball/" + sumo_tarball, workdir=workdir + '/' + bundler_output_dir, haltOnFailure=True, name="Download sumo"),
-            ShellCommand(command="./bundle_pyinstaller.sh " + sumo_tarball, workdir=workdir + '/' + bundler_output_dir, name="Create bundle"),
-            ShellCommand(command=publish_bundle, workdir=workdir + '/' + bundler_output_dir, name="Publish bundle")
+            steps.Git(repourl=repo_url, branch=branch, workdir=repo_dir, mode='full', method='clobber', shallow=True, haltOnFailure=True, name="Pull " + repo_url),
+            steps.ShellCommand(command="rm -rf " + bundler_output_dir, workdir=workdir, name="Remove previous bundler dir"),
+            steps.ShellCommand(command="mkdir " + bundler_output_dir, workdir=workdir, name="Create bundler dir"),
+            steps.ShellCommand(command="cp bundle_pyinstaller.sh ../" + bundler_output_dir, workdir=repo_dir, haltOnFailure=True, name="Copy bundle_pyinstaller"),
+            steps.ShellCommand(command="mkdir files", workdir=workdir + '/' + bundler_output_dir, name="Create auxiliary folder"),
+            steps.ShellCommand(command="wget http://lizard.leap.se/sumo-tarball/" + sumo_tarball, workdir=workdir + '/' + bundler_output_dir, haltOnFailure=True, name="Download sumo"),
+            steps.ShellCommand(command="./bundle_pyinstaller.sh " + sumo_tarball, workdir=workdir + '/' + bundler_output_dir, name="Create bundle"),
+            steps.ShellCommand(command=publish_bundle, workdir=workdir + '/' + bundler_output_dir, name="Publish bundle")
         ])
 
         return BuilderConfig(name=builder_name, slavenames=self.slaves.leap_names(), factory=factory)
@@ -268,16 +295,21 @@ def _add_repo_to_factory(factory, repo_name, git_branch, namespace, venv_name):
     repo_url = github_repo_url(repo_name)
 
     factory.addStep(
-        Git(repourl=repo_url, branch=git_branch, workdir=workdir,
-            codebase=repo_name, mode='full', method='clobber',
-            shallow=True, haltOnFailure=True, name="Pull " + repo_url))
+	steps.Git(repourl=repo_url, codebase=repo_name, clobberOnFailure=True,
+                  method='fresh', branch='develop', alwaysUseLatest=True,
+		  workdir=workdir))
+
+    #factory.addStep(
+    #    steps.Git(repourl=repo_url, branch=git_branch, workdir=workdir,
+    #        codebase=repo_name, mode='full', method='clobber',
+    #        shallow=True, haltOnFailure=True, name="PullStep... " + repo_url))
 
     if 'bitmask_client' in repo_name:
         factory.addSteps([
-            ShellCommand(command='pkg/postmkvenv.sh', env=sandbox_path,
+            steps.ShellCommand(command='pkg/postmkvenv.sh', env=sandbox_path,
                          haltOnFailure=False, workdir=workdir,
                          name="postmkenv"),
-            ShellCommand(command='make', env=sandbox_path,
+            steps.ShellCommand(command='make', env=sandbox_path,
                          haltOnFailure=False, workdir=workdir,
                          name="make")
         ])
@@ -288,34 +320,37 @@ def _add_repo_to_factory(factory, repo_name, git_branch, namespace, venv_name):
                     subpackage is not "server" or
                     'keymanager' is not venv_name):
                 factory.addSteps([
-                    ShellCommand(
+                    steps.ShellCommand(
                         command=install_requirements,
                         env=sandbox_path_soledad,
                         haltOnFailure=True,
-                        workdir=workdir+'/'+subpackage,
+                        #workdir='build',
+		        workdir=workdir+'/'+subpackage,
                         name="reqs: " + repo_name+"."+subpackage),
-                    ShellCommand(
+                    steps.ShellCommand(
                         command=install_requirements_tests,
                         env=sandbox_path_soledad,
                         haltOnFailure=True,
                         workdir=workdir+'/'+subpackage,
+			#workdir='build',
                         name="test reqs: " + repo_name+"."+subpackage),
-                    ShellCommand(
+                    steps.ShellCommand(
                         command=install,
                         env=sandbox_path_soledad,
                         haltOnFailure=True,
                         workdir=workdir+'/'+subpackage,
+                        #workdir='build',
                         name="Install " + repo_name+"."+subpackage)
                 ])
     else:
         factory.addSteps([
-            ShellCommand(command=install_requirements, env=sandbox_path,
+            steps.ShellCommand(command=install_requirements, env=sandbox_path,
                          haltOnFailure=False, workdir=workdir,
                          name="reqs: " + repo_name),
-            ShellCommand(command=install_requirements_tests,
+            steps.ShellCommand(command=install_requirements_tests,
                          env=sandbox_path, haltOnFailure=False,
                          workdir=workdir, name="test reqs: " + repo_name),
-            ShellCommand(command=install, env=sandbox_path,
+            steps.ShellCommand(command=install, env=sandbox_path,
                          haltOnFailure=True, workdir=workdir,
                          name="Install " + repo_name)
         ])
